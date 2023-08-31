@@ -25,7 +25,7 @@ def extract_info_from_log(log_content):
     return pd.DataFrame(data)
 
 def main():
-    with open("license.log", 'r') as log_file:
+    with open("C:/wamp64/www/logParser/trial/license.log", 'r') as log_file:
         log_content = log_file.read()
 
     df = extract_info_from_log(log_content)
