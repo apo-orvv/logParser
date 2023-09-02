@@ -98,176 +98,223 @@ class LogView
         </html>';
     }
 
-    public function displayData($type, $data) {
+    public function displayData($type, $data)
+    {
         echo '<!DOCTYPE html>
-            <html>
-            <head>
-                <title>Feature Activity Visualization</title>
-                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                <style>
-                .graph-container {
-                    max-width: 800px;
-                    margin: 20px auto;
-                    padding: 20px;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
-                    background-color: #f5f5f5;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-                .data-table {
-                    max-width: 500px;
-                    margin: 20px auto;
-                    padding: 20px;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
-                    background-color: #f5f5f5;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                th, td {
-                    padding: 8px;
-                    text-align: left;
-                    border-bottom: 1px solid #ddd;
-                }
-                </style>
-            </head>
-            <body>';
-        
+        <html>
+        <head>
+            <title>Feature Activity Visualization</title>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+            <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+            <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+            <style>
+            .graph-container1 {
+                max-width: 500px;
+                margin: 20px auto;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                background-color: #f5f5f5;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .graph-container2 {
+                max-width: 800px;
+                margin: 20px auto;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                background-color: #f5f5f5;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .data-table {
+                max-width: 700px;
+                margin: 20px auto;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                background-color: #f5f5f5;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+            </style>
+        </head>
+        <body>';
+
         if ($type === 'download') {
             echo '<p style="text-align: center;">Processed CSV file ready for download: <a href="' . $data . '">' . $data . '</a></p>';
         } elseif ($type === 'graph') {
-            echo '<div class="graph-container">';
+            
             if ($data['graphType'] === 'doughnut') {
+                echo '<div class="graph-container1">';
                 echo '
-                        <h1>Feature Activity Graph</h1>
-                        <canvas id="featureGraph"></canvas>
+                    <h1>Cumulative Feature Tracker</h1>
+                    <canvas id="featureGraph"></canvas>
+                
+                <script>
+                    var ctx = document.getElementById("featureGraph").getContext("2d");
                     
-                    <script>
-                        var ctx = document.getElementById("featureGraph").getContext("2d");
-                        
-                        var featureData = ' . json_encode($data['featureDurations']) . ';
-                        var labels = featureData.map(item => item.Feature);
-                        var data = featureData.map(item => parseFloat(item.Duration));
-        
-                        new Chart(ctx, {
-                            type: "doughnut",
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: "Feature Activity Duration (hours)",
-                                    data: data,
-                                    backgroundColor: [
-                                        "rgba(0, 0, 0, 0.2)",
-                                        "rgba(255, 159, 64, 0.2)",
-                                        "rgba(104, 215, 196, 0.2)",
-                                        "rgba(85, 5, 186, 0.2)",
-                                        "rgba(4, 105, 255, 0.2)",
-                                        "rgba(200, 225, 77, 0.2)",
-                                        // colors for more age group
-                                    ],
-                                    borderColor: [
-                                        "rgba(0, 0, 0, 1)",
-                                        "rgba(255, 159, 64, 1)",
-                                        "rgba(104, 215, 196, 1)",
-                                        "rgba(85, 5, 186, 1)",
-                                        "rgba(4, 105, 255, 1)",
-                                        "rgba(200, 225, 77, 1)",
-                                        // colors for more age group
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: {
-                                    legend: {
-                                        position: "top",
-                                    }
+                    var featureData = ' . json_encode($data['featureDurations']) . ';
+                    var labels = featureData.map(item => item.Feature);
+                    var data = featureData.map(item => parseFloat(item.Duration));
+    
+                    new Chart(ctx, {
+                        type: "doughnut",
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: "Feature Activity Duration (hours)",
+                                data: data,
+                                backgroundColor: [
+                                    "rgba(0, 0, 0, 0.2)",
+                                    "rgba(255, 159, 64, 0.2)",
+                                    "rgba(104, 215, 196, 0.2)",
+                                    "rgba(85, 5, 186, 0.2)",
+                                    "rgba(4, 105, 255, 0.2)",
+                                    "rgba(200, 225, 77, 0.2)",
+                                    // colors for more age group
+                                ],
+                                borderColor: [
+                                    "rgba(0, 0, 0, 1)",
+                                    "rgba(255, 159, 64, 1)",
+                                    "rgba(104, 215, 196, 1)",
+                                    "rgba(85, 5, 186, 1)",
+                                    "rgba(4, 105, 255, 1)",
+                                    "rgba(200, 225, 77, 1)",
+                                    // colors for more age group
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: "top",
                                 }
                             }
-                        });
-                    </script>';
-            } elseif ($data['graphType'] === 'line') {
-                echo '
-                        <h1>Feature Activity Line Graph</h1>
-                        <canvas id="featureLineGraph"></canvas>
-                    
-                    <script>
-                        var ctx = document.getElementById("featureLineGraph").getContext("2d");
-                        
-                        var featureData = ' . json_encode($data['featureDurationsByDay']) . ';
-                        var labels = featureData[0].Dates; // Dates are the same for all features
-                        var datasets = featureData.map(item => {
-                            return {
-                                label: item.Feature,
-                                data: item.Durations.map(d => parseFloat(d)),
-                                borderColor: getRandomColor(),
-                                fill: false
-                            };
-                        });
-        
-                        new Chart(ctx, {
-                            type: "line",
-                            data: {
-                                labels: labels,
-                                datasets: datasets
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: {
-                                    legend: {
-                                        position: "top",
-                                    }
-                                }
-                            }
-                        });
-        
-                        function getRandomColor() {
-                            var letters = "0123456789ABCDEF";
-                            var color = "#";
-                            for (var i = 0; i < 6; i++) {
-                                color += letters[Math.floor(Math.random() * 16)];
-                            }
-                            return color;
                         }
-                    </script>';    
+                    });
+                </script>';
+                echo '</div>';
+            } elseif ($data['graphType'] === 'bar') {
+                echo '<div class="graph-container2">';
+                echo '
+                    <h1>Feature Flux: Charting Daily Engagement</h1>
+                    <canvas id="featureBarGraph"></canvas>
+                
+                <script>
+                    var ctx = document.getElementById("featureBarGraph").getContext("2d");
+                    
+                    var featureData = ' . json_encode($data['featureDurationsByDay']) . ';
+                    var labels = featureData[0].Dates; // Dates are the same for all features
+                    var datasets = featureData.map(item => {
+                        return {
+                            label: item.Feature,
+                            data: item.Durations.map(d => parseFloat(d)),
+                            backgroundColor: getRandomColor(),
+                            fill: false
+                        };
+                    });
+    
+                    new Chart(ctx, {
+                        type: "bar",
+                        data: {
+                            labels: labels,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: "top",
+                                }
+                            }
+                        }
+                    });
+    
+                    function getRandomColor() {
+                        var letters = "0123456789ABCDEF";
+                        var color = "#";
+                        for (var i = 0; i < 6; i++) {
+                            color += letters[Math.floor(Math.random() * 16)];
+                        }
+                        return color;
+                    }
+                </script>';
+                echo '</div>';
             }
-            echo '</div>';
+            
             echo '<div class="data-table">';
-        
-        if ($data['graphType'] === 'doughnut') {
-            echo '<h2>Feature Activity Doughnut Data</h2>';
-            echo '<table>';
-            echo '<tr><th>Feature</th><th>Duration (hours)</th></tr>';
-            foreach ($data['featureDurations'] as $item) {
-                echo '<tr><td>' . $item['Feature'] . '</td><td>' . $item['Duration'] . '</td></tr>';
-            }
-            echo '</table>';
-        } elseif ($data['graphType'] === 'line') {
-            echo '<h2>Feature Activity Line Data</h2>';
-            echo '<table>';
-            echo '<tr><th>Date</th>';
-            foreach ($data['featureDurationsByDay'] as $item) {
-                echo '<th>' . $item['Feature'] . '</th>';
-            }
-            echo '</tr>';
-            foreach ($data['featureDurationsByDay'][0]['Dates'] as $date) {
-                echo '<tr><td>' . $date . '</td>';
-                foreach ($data['featureDurationsByDay'] as $item) {
-                    echo '<td>' . $item['Durations'][array_search($date, $item['Dates'])] . '</td>';
+
+            if ($data['graphType'] === 'doughnut') {
+                echo '<h2>Feature Monitor</h2>';
+                echo '<table id="dataTable" class="display">';
+                echo '<thead><tr><th>Feature</th><th>Duration (hours)</th></tr></thead>';
+                echo '<tbody>';
+                foreach ($data['featureDurations'] as $item) {
+                    echo '<tr><td>' . $item['Feature'] . '</td><td>' . $item['Duration'] . '</td></tr>';
                 }
-                echo '</tr>';
+                echo '</tbody>';
+                echo '</table>';
+                echo '<script>
+            $(document).ready(function() {
+                $("#dataTable").DataTable();
+            });
+        </script>';
+            } elseif ($data['graphType'] === 'bar') {
+                echo '<h2>Engagement Dynamics: Daily Feature Activity</h2>';
+                echo '<table id="dataTable2" class="display">';
+                echo '<thead><tr><th>Date</th>';
+
+                // Print feature names as column headers
+                foreach ($data['featureDurationsByDay'] as $featureData) {
+                    echo '<th>' . $featureData['Feature'] . '</th>';
+                }
+
+                echo '</tr></thead>';
+                echo '<tbody>';
+
+                // Iterate through dates
+                $dates = $data['featureDurationsByDay'][0]['Dates']; // Assuming Dates are the same for all features
+                foreach ($dates as $date) {
+                    echo '<tr>';
+                    echo '<td>' . $date . '</td>';
+
+                    // Iterate through features and find matching date
+                    foreach ($data['featureDurationsByDay'] as $featureData) {
+                        $featureDateIndex = array_search($date, $featureData['Dates']);
+                        if ($featureDateIndex !== false) {
+                            $duration = $featureData['Durations'][$featureDateIndex];
+                            echo '<td>' . $duration . '</td>';
+                        } else {
+                            // Date not found for this feature, display an empty cell
+                            echo '<td></td>';
+                        }
+                    }
+
+                    echo '</tr>';
+                }
+
+                echo '</tbody>';
+                echo '</table>';
+                echo '<script>
+            $(document).ready(function() {
+                $("#dataTable2").DataTable();
+            });
+        </script>';
             }
-            echo '</table>';
+
+            echo '</div>';
+            echo '</body></html>';
         }
-        echo '</div>';
-    
-        echo '</body></html>';
     }
-    
-    
-}
 }

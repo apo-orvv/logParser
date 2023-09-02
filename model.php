@@ -1,8 +1,10 @@
 <?php
-class LogModel {
+class LogModel
+{
     private $pdo;
 
-    public function __construct() {
+    public function __construct()
+    {
         // Update these parameters with your actual database credentials
         $dsn = 'mysql:host=localhost;dbname=test;charset=utf8';
         $username = 'root';
@@ -12,7 +14,8 @@ class LogModel {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    private function createTable() {
+    private function createTable()
+    {
         $sql = "
             DELETE FROM `licenselog`;
             CREATE TABLE IF NOT EXISTS `licenselog` (
@@ -30,7 +33,8 @@ class LogModel {
         $this->pdo->exec($sql);
     }
 
-    public function processLog($logContent) {
+    public function processLog($logContent)
+    {
         $data = [];
         $currentDate = null;
 
@@ -73,13 +77,15 @@ class LogModel {
         return $data;
     }
 
-    private function insertDataToDatabase($date, $time, $software, $status, $feature, $userMachine, $licenses) {
+    private function insertDataToDatabase($date, $time, $software, $status, $feature, $userMachine, $licenses)
+    {
         $sql = "INSERT INTO licenselog (Date, Time, Software, Status, Feature, UserMachine, Licenses) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$date, $time, $software, $status, $feature, $userMachine, $licenses]);
     }
 
-    public function calculateFeatureDurations($startDate, $endDate) {
+    public function calculateFeatureDurations($startDate, $endDate)
+    {
         $sql = "
             SELECT Feature, SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(IN_TIME, OUT_TIME)))) AS Duration
             FROM (
@@ -98,7 +104,8 @@ class LogModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function calculateFeatureDurationsByDay($startDate, $endDate) {
+    public function calculateFeatureDurationsByDay($startDate, $endDate)
+    {
         $sql = "
             SELECT
             Feature,
@@ -119,14 +126,26 @@ class LogModel {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$startDate, $endDate]);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
+        // Create a list of dates within the range
+        $dateRange = [];
+        $currentDate = new DateTime($startDate);
+        $endDateObj = new DateTime($endDate);
+
+        while ($currentDate <= $endDateObj) {
+            $dateRange[] = $currentDate->format('Y-m-d');
+            $currentDate->modify('+1 day');
+        }
+
+        // Initialize the result array
         $featureDurationsByDay = [];
-    
+
+        // Fill in the missing entries with NULL values
         foreach ($data as $row) {
             $feature = $row['Feature'];
             $date = $row['Date'];
             $duration = $row['Duration'];
-    
+
             if (!isset($featureDurationsByDay[$feature])) {
                 $featureDurationsByDay[$feature] = [
                     'Feature' => $feature,
@@ -134,16 +153,29 @@ class LogModel {
                     'Durations' => []
                 ];
             }
-    
+
             $featureDurationsByDay[$feature]['Dates'][] = $date;
             $featureDurationsByDay[$feature]['Durations'][] = $duration;
         }
-    
+
+        // Fill in missing dates with NULL values
+        foreach ($featureDurationsByDay as &$featureData) {
+            foreach ($dateRange as $date) {
+                if (!in_array($date, $featureData['Dates'])) {
+                    $featureData['Dates'][] = $date;
+                    $featureData['Durations'][] = null; // NULL value for missing date
+                }
+            }
+            // Replace NULL durations with "00:00:00"
+            foreach ($featureData['Durations'] as &$duration) {
+                if ($duration === null) {
+                    $duration = "00:00:00";
+                }
+            }
+            // Sort the data by date
+            array_multisort($featureData['Dates'], $featureData['Durations']);
+        }
+
         return array_values($featureDurationsByDay);
     }
-    
-    
 }
-
-
-?>

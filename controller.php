@@ -46,7 +46,7 @@ class LogController
                     'featureDurations' => $featureDurations,
                 ]);
                 $this->view->displayData('graph', [
-                    'graphType' => 'line',
+                    'graphType' => 'bar',
                     'featureDurationsByDay' => $featureDurationsByDay,
                 ]);
             }
