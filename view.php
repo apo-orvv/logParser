@@ -84,13 +84,6 @@ class LogView
                     <label for="log_file">Choose a Log File</label> 
                     <label class="file-input-label" for="log_file">Browse</label> <br>
                     <center><input type="file" name="log_file" id="log_file" required></center> <br><br>
-
-                    <!-- User Input Date Range -->
-                    <label for="start_date">Start Date:</label>
-                    <input type="date" name="start_date" id="start_date" required><br><br>
-                    <label for="end_date">End Date:</label>
-                    <input type="date" name="end_date" id="end_date" required> <br><br><br>
-
                     <button type="submit" name="submit">Process Log</button>
                 </form>
             </div>
@@ -98,7 +91,7 @@ class LogView
         </html>';
     }
 
-    public function displayData($type, $data)
+    public function displayData($data, $csvData)
     {
         echo '<!DOCTYPE html>
         <html>
@@ -127,7 +120,7 @@ class LogView
                 background-color: #f5f5f5;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
-            .data-table {
+            .data-table, .data-table2 {
                 max-width: 700px;
                 margin: 20px auto;
                 padding: 20px;
@@ -148,14 +141,21 @@ class LogView
             </style>
         </head>
         <body>';
+        echo '<p style="text-align: center;">Processed CSV file ready for download: <a href="' . $csvData . '">' . $csvData . '</a></p>';
+        echo '
+            <form method="post" enctype="multipart/form-data">
+                <!-- User Input Date Range -->
+                <label for="start_date">Start Date:</label>
+                <input type="date" name="start_date" id="start_date" required><br>
+                <br>
+                <label for="end_date">End Date:</label>
+                <input type="date" name="end_date" id="end_date" required><br><br>
 
-        if ($type === 'download') {
-            echo '<p style="text-align: center;">Processed CSV file ready for download: <a href="' . $data . '">' . $data . '</a></p>';
-        } elseif ($type === 'graph') {
-            
-            if ($data['graphType'] === 'doughnut') {
-                echo '<div class="graph-container1">';
-                echo '
+                <button type="submit" name="submit2">Process Log</button>
+            </form>
+        ';
+        echo '<div class="graph-container1">';
+        echo '
                     <h1>Cumulative Feature Tracker</h1>
                     <canvas id="featureGraph"></canvas>
                 
@@ -174,22 +174,8 @@ class LogView
                                 label: "Feature Activity Duration (hours)",
                                 data: data,
                                 backgroundColor: [
-                                    "rgba(0, 0, 0, 0.2)",
-                                    "rgba(255, 159, 64, 0.2)",
-                                    "rgba(104, 215, 196, 0.2)",
-                                    "rgba(85, 5, 186, 0.2)",
-                                    "rgba(4, 105, 255, 0.2)",
-                                    "rgba(200, 225, 77, 0.2)",
-                                    // colors for more age group
-                                ],
-                                borderColor: [
-                                    "rgba(0, 0, 0, 1)",
-                                    "rgba(255, 159, 64, 1)",
-                                    "rgba(104, 215, 196, 1)",
-                                    "rgba(85, 5, 186, 1)",
-                                    "rgba(4, 105, 255, 1)",
-                                    "rgba(200, 225, 77, 1)",
-                                    // colors for more age group
+                                    getRandomColor(),getRandomColor(),getRandomColor(),
+                                    getRandomColor(),getRandomColor(),getRandomColor()
                                 ],
                                 borderWidth: 1
                             }]
@@ -203,11 +189,35 @@ class LogView
                             }
                         }
                     });
+                    function getRandomColor() {
+                        var letters = "0123456789ABCDEF";
+                        var color = "#";
+                        for (var i = 0; i < 6; i++) {
+                            color += letters[Math.floor(Math.random() * 16)];
+                        }
+                        return color;
+                    }
                 </script>';
-                echo '</div>';
-            } elseif ($data['graphType'] === 'bar') {
-                echo '<div class="graph-container2">';
-                echo '
+        echo '</div>';
+        echo '<div class="data-table">';
+
+        echo '<h2>Feature Monitor</h2>';
+        echo '<table id="dataTable" class="display">';
+        echo '<thead><tr><th>Feature</th><th>Duration (hours)</th></tr></thead>';
+        echo '<tbody>';
+        foreach ($data['featureDurations'] as $item) {
+            echo '<tr><td>' . $item['Feature'] . '</td><td>' . $item['Duration'] . '</td></tr>';
+        }
+        echo '</tbody>';
+        echo '</table>';
+        echo '<script>
+            $(document).ready(function() {
+                $("#dataTable").DataTable();
+            });
+        </script>';
+        echo '</div>';
+        echo '<div class="graph-container2">';
+        echo '
                     <h1>Feature Flux: Charting Daily Engagement</h1>
                     <canvas id="featureBarGraph"></canvas>
                 
@@ -250,71 +260,51 @@ class LogView
                         return color;
                     }
                 </script>';
-                echo '</div>';
+        echo '</div>';
+
+        echo '<div class="data-table2">';
+        echo '<h2>Engagement Dynamics: Daily Feature Activity</h2>';
+        echo '<table id="dataTable2" class="display">';
+        echo '<thead><tr><th>Date</th>';
+
+        // Print feature names as column headers
+        foreach ($data['featureDurationsByDay'] as $featureData) {
+            echo '<th>' . $featureData['Feature'] . '</th>';
+        }
+
+        echo '</tr></thead>';
+        echo '<tbody>';
+
+        // Iterate through dates
+        $dates = $data['featureDurationsByDay'][0]['Dates']; // Assuming Dates are the same for all features
+        foreach ($dates as $date) {
+            echo '<tr>';
+            echo '<td>' . $date . '</td>';
+
+            // Iterate through features and find matching date
+            foreach ($data['featureDurationsByDay'] as $featureData) {
+                $featureDateIndex = array_search($date, $featureData['Dates']);
+                if ($featureDateIndex !== false) {
+                    $duration = $featureData['Durations'][$featureDateIndex];
+                    echo '<td>' . $duration . '</td>';
+                } else {
+                    // Date not found for this feature, display an empty cell
+                    echo '<td></td>';
+                }
             }
-            
-            echo '<div class="data-table">';
 
-            if ($data['graphType'] === 'doughnut') {
-                echo '<h2>Feature Monitor</h2>';
-                echo '<table id="dataTable" class="display">';
-                echo '<thead><tr><th>Feature</th><th>Duration (hours)</th></tr></thead>';
-                echo '<tbody>';
-                foreach ($data['featureDurations'] as $item) {
-                    echo '<tr><td>' . $item['Feature'] . '</td><td>' . $item['Duration'] . '</td></tr>';
-                }
-                echo '</tbody>';
-                echo '</table>';
-                echo '<script>
-            $(document).ready(function() {
-                $("#dataTable").DataTable();
-            });
-        </script>';
-            } elseif ($data['graphType'] === 'bar') {
-                echo '<h2>Engagement Dynamics: Daily Feature Activity</h2>';
-                echo '<table id="dataTable2" class="display">';
-                echo '<thead><tr><th>Date</th>';
+            echo '</tr>';
+        }
 
-                // Print feature names as column headers
-                foreach ($data['featureDurationsByDay'] as $featureData) {
-                    echo '<th>' . $featureData['Feature'] . '</th>';
-                }
-
-                echo '</tr></thead>';
-                echo '<tbody>';
-
-                // Iterate through dates
-                $dates = $data['featureDurationsByDay'][0]['Dates']; // Assuming Dates are the same for all features
-                foreach ($dates as $date) {
-                    echo '<tr>';
-                    echo '<td>' . $date . '</td>';
-
-                    // Iterate through features and find matching date
-                    foreach ($data['featureDurationsByDay'] as $featureData) {
-                        $featureDateIndex = array_search($date, $featureData['Dates']);
-                        if ($featureDateIndex !== false) {
-                            $duration = $featureData['Durations'][$featureDateIndex];
-                            echo '<td>' . $duration . '</td>';
-                        } else {
-                            // Date not found for this feature, display an empty cell
-                            echo '<td></td>';
-                        }
-                    }
-
-                    echo '</tr>';
-                }
-
-                echo '</tbody>';
-                echo '</table>';
-                echo '<script>
+        echo '</tbody>';
+        echo '</table>';
+        echo '<script>
             $(document).ready(function() {
                 $("#dataTable2").DataTable();
             });
         </script>';
-            }
-
-            echo '</div>';
-            echo '</body></html>';
-        }
+        echo '</div>';
+        echo '</div>';
+        echo '</body></html>';
     }
 }

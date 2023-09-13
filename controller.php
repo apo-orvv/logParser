@@ -18,38 +18,32 @@ class LogController
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             if (isset($_FILES['log_file']) && $_FILES['log_file']['error'] === UPLOAD_ERR_OK) {
                 $logContent = file_get_contents($_FILES['log_file']['tmp_name']);
-
                 $processedData = $this->model->processLog($logContent);
-                $startDate = $_POST['start_date'];
-                $endDate = $_POST['end_date'];
-
                 // Generate CSV file and save it
-                $csvFilename = 'processed_license_info.csv';
+                $csvFilename = 'abaqus_info.csv';
                 $csvContent = $this->generateCSVContent($processedData);
                 file_put_contents($csvFilename, $csvContent);
 
-                // Fetch data and calculate feature durations
-                $featureDurations = $this->model->calculateFeatureDurations($startDate, $endDate);
+                $featureDurations = $this->model->calculateFeatureDurations();
+                $featureDurationsByDay = $this->model->calculateFeatureDurationsByDay();
 
-                // Fetch data and calculate feature durations by day
-                $featureDurationsByDay = $this->model->calculateFeatureDurationsByDay($startDate, $endDate);
-
-                $data = [
-                    'csvFilename' => $csvFilename,
-                    'featureDurations' => $featureDurations,
+                $this->view->displayData([
                     'featureDurationsByDay' => $featureDurationsByDay,
-                ];
-
-                $this->view->displayData('download', $csvFilename);
-                $this->view->displayData('graph', [
-                    'graphType' => 'doughnut',
                     'featureDurations' => $featureDurations,
-                ]);
-                $this->view->displayData('graph', [
-                    'graphType' => 'bar',
-                    'featureDurationsByDay' => $featureDurationsByDay,
-                ]);
+                ], $csvFilename);
             }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit2'])) {
+            $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : null;
+            $end_date = isset($_POST['end_date']) ? $_POST['end_date'] : null;
+
+            $featureDurations = $this->model->calculateFeatureDurationschoice($start_date, $end_date);
+            $featureDurationsByDay = $this->model->calculateFeatureDurationsByDaychoice($start_date, $end_date);
+
+            $csvFilename = 'abaqus_info.csv';
+            $this->view->displayData([
+                'featureDurationsByDay' => $featureDurationsByDay,
+                'featureDurations' => $featureDurations,
+            ], $csvFilename);
         } else {
             $this->view->showForm();
         }

@@ -17,17 +17,15 @@ class LogModel
     private function createTable()
     {
         $sql = "
-            DELETE FROM `licenselog`;
+            DROP TABLE IF EXISTS `licenselog`;
             CREATE TABLE IF NOT EXISTS `licenselog` (
-              `id` int NOT NULL AUTO_INCREMENT,
               `Date` date DEFAULT NULL,
               `Time` time DEFAULT NULL,
               `Software` varchar(255) DEFAULT NULL,
               `Status` varchar(255) DEFAULT NULL,
               `Feature` varchar(255) DEFAULT NULL,
               `UserMachine` varchar(255) DEFAULT NULL,
-              `Licenses` int DEFAULT NULL,
-              PRIMARY KEY (`id`)
+              `Licenses` int DEFAULT NULL
             )
         ";
         $this->pdo->exec($sql);
@@ -84,10 +82,118 @@ class LogModel
         $stmt->execute([$date, $time, $software, $status, $feature, $userMachine, $licenses]);
     }
 
-    public function calculateFeatureDurations($startDate, $endDate)
+    public function calculateFeatureDurations()
     {
         $sql = "
-            SELECT Feature, SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(IN_TIME, OUT_TIME)))) AS Duration
+            SELECT Feature, SEC_TO_TIME(SUM(TIME_TO_SEC(ABS(TIMEDIFF(IN_TIME, OUT_TIME))))) AS Duration
+            FROM (
+                SELECT 
+                    Feature, 
+                    MAX(CASE WHEN Status = 'IN' THEN Time END) AS IN_TIME,
+                    MIN(CASE WHEN Status = 'OUT' THEN Time END) AS OUT_TIME
+                FROM licenselog
+                GROUP BY Feature, Date
+            ) AS FeatureStatus
+            GROUP BY Feature
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function calculateFeatureDurationsByDay()
+    {
+        // Calculate MIN(Date) and MAX(Date) here
+        $minDateQuery = "SELECT MIN(Date) FROM licenselog";
+        $maxDateQuery = "SELECT MAX(Date) FROM licenselog";
+
+        $minDateStmt = $this->pdo->query($minDateQuery);
+        $maxDateStmt = $this->pdo->query($maxDateQuery);
+
+        $minDate = $minDateStmt->fetchColumn();
+        $maxDate = $maxDateStmt->fetchColumn();
+
+        $sql = "
+        SELECT
+        Feature,
+        Date,
+        SEC_TO_TIME(SUM(TIME_TO_SEC(ABS(TIMEDIFF(IN_TIME, OUT_TIME))))) AS Duration
+    FROM (
+        SELECT
+            Feature,
+            Date,
+            MAX(CASE WHEN Status = 'IN' THEN Time END) AS IN_TIME,
+            MIN(CASE WHEN Status = 'OUT' THEN Time END) AS OUT_TIME
+        FROM licenselog
+        WHERE Date >= :minDate AND Date <= :maxDate
+        GROUP BY Feature, Date
+    ) AS FeatureStatus
+    GROUP BY Feature, Date;
+    ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":minDate", $minDate);
+        $stmt->bindParam(":maxDate", $maxDate);
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Create a list of dates within the range
+        $dateRange = [];
+        $currentDate = new DateTime($minDate);
+        $endDateObj = new DateTime($maxDate);
+
+        while ($currentDate <= $endDateObj) {
+            $dateRange[] = $currentDate->format('Y-m-d');
+            $currentDate->modify('+1 day');
+        }
+
+        // Initialize the result array
+        $featureDurationsByDay = [];
+
+        // Fill in the missing entries with NULL values
+        foreach ($data as $row) {
+            $feature = $row['Feature'];
+            $date = $row['Date'];
+            $duration = $row['Duration'];
+
+            if (!isset($featureDurationsByDay[$feature])) {
+                $featureDurationsByDay[$feature] = [
+                    'Feature' => $feature,
+                    'Dates' => [],
+                    'Durations' => []
+                ];
+            }
+
+            $featureDurationsByDay[$feature]['Dates'][] = $date;
+            $featureDurationsByDay[$feature]['Durations'][] = $duration;
+        }
+
+        // Fill in missing dates with NULL values
+        foreach ($featureDurationsByDay as &$featureData) {
+            foreach ($dateRange as $date) {
+                if (!in_array($date, $featureData['Dates'])) {
+                    $featureData['Dates'][] = $date;
+                    $featureData['Durations'][] = null; // NULL value for missing date
+                }
+            }
+            // Replace NULL durations with "00:00:00"
+            foreach ($featureData['Durations'] as &$duration) {
+                if ($duration === null) {
+                    $duration = "00:00:00";
+                }
+            }
+            // Sort the data by date
+            array_multisort($featureData['Dates'], $featureData['Durations']);
+        }
+
+        return array_values($featureDurationsByDay);
+    }
+
+    public function calculateFeatureDurationschoice($startDate, $endDate)
+    {
+        $sql = "
+            SELECT Feature, SEC_TO_TIME(ABS(SUM(TIME_TO_SEC(TIMEDIFF(IN_TIME, OUT_TIME))))) AS Duration
             FROM (
                 SELECT 
                     Feature, 
@@ -104,13 +210,13 @@ class LogModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function calculateFeatureDurationsByDay($startDate, $endDate)
+    public function calculateFeatureDurationsByDaychoice($startDate, $endDate)
     {
         $sql = "
             SELECT
             Feature,
             Date,
-            SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(IN_TIME, OUT_TIME)))) AS Duration
+            SEC_TO_TIME(ABS(SUM(TIME_TO_SEC(TIMEDIFF(IN_TIME, OUT_TIME))))) AS Duration
         FROM (
             SELECT
                 Feature,
