@@ -1,6 +1,6 @@
 To develop a chatbot for Software Defined Networking (SDN), you can follow these steps:
 
-1. **Understand SDN**: Familiarize yourself with the concepts and benefits of SDN. SDN is a networking architecture that provides centralized management, automation, and dynamic traffic routing[2]. It simplifies network provisioning and allows for more efficient resource utilization[5].
+1. Understand SDN**: Familiarize yourself with the concepts and benefits of SDN. SDN is a networking architecture that provides centralized management, automation, and dynamic traffic routing[2]. It simplifies network provisioning and allows for more efficient resource utilization[5].
 
 2. **Identify User Needs**: Determine the specific tasks and information that users would like the chatbot to handle. This can include device information, device setup, and general network management details[1].
 
