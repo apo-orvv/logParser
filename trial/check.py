@@ -10,7 +10,7 @@ def extract_info_from_log(log_content):
     lines = log_content.strip().split('\n')
     
     current_date = None
-    
+
     for line in lines:
         if re.match(r'(\d{2}:\d{2}:\d{2})', line):
             if "TIMESTAMP" in line:
