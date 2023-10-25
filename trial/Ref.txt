@@ -1,0 +1,15 @@
+•	https://ieeexplore.ieee.org/document/7124686
+•	https://arxiv.org/pdf/1803.06818.pdf
+•	https://youtube.com/watch?v=YtHdHlRnXtk
+•	https://www.techopedia.com/6/33343/networks/an-in-depth-look-at-software-defined-networking
+•	https://www.zdnet.com/home-and-office/networking/software-defined-networking-101-what-sdn-is-and-where-its-going/
+•	https://www.infoq.com/software-defined-network/
+•	https://www.geeksforgeeks.org/software-defined-networking/
+•	https://www.researchgate.net/profile/Kamal-Benzekki/publication/313407199_Software-defined_networking_SDN_A_survey/links/5a59036945851545026fcf6e/Software-defined-networking-SDN-A-survey.pdf
+•	https://www.researchgate.net/publication/284019515_A_survey_on_software_defined_networking_and_its_applications
+•	https://www.intechopen.com/chapters/76133
+•	https://www.linkedin.com/pulse/ai-based-software-defined-networks-sdn-improve-our-customers-garcia
+•	https://www.howtoforge.com/tutorial/software-defined-networking-sdn-explained-for-beginners/
+
+
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3531782
